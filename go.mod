@@ -1,4 +1,4 @@
-module github.com/siddhantk232/currency
+module github.com/siddhantk232/go-grpc-currency
 
 go 1.15
 
