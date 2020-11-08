@@ -4,18 +4,20 @@ import (
 	"context"
 
 	"github.com/hashicorp/go-hclog"
+	"github.com/siddhantk232/currency/data"
 	"github.com/siddhantk232/currency/protos/currency"
 )
 
 // Currency service
 type Currency struct {
-	log hclog.Logger
+	rates *data.ExchangeRates
+	log   hclog.Logger
 	currency.UnimplementedCurrencyServer
 }
 
 // NewCurrency creates new currency handler
-func NewCurrency(l hclog.Logger) *Currency {
-	return &Currency{log: l}
+func NewCurrency(rates *data.ExchangeRates, l hclog.Logger) *Currency {
+	return &Currency{rates: rates, log: l}
 }
 
 // GetRate service registrar
@@ -23,6 +25,12 @@ func (c *Currency) GetRate(ctx context.Context, rr *currency.RateRequest) (*curr
 
 	c.log.Info("handle GetRate", "base", rr.GetBase(), "destination", rr.GetDestination())
 
-	return &currency.RateResponse{Rate: 0.5}, nil
+	rate, err := c.rates.GetRate(rr.GetBase().String(), rr.GetDestination().String())
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &currency.RateResponse{Rate: rate}, nil
 
 }
