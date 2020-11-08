@@ -18,12 +18,29 @@ type ExchangeRates struct {
 // NewRates get new ExchangeRates
 func NewRates(l hclog.Logger) (*ExchangeRates, error) {
 	er := &ExchangeRates{log: l, rates: map[string]float64{}}
-	err := er.GetRates()
+	err := er.getRates()
 	return er, err
 }
 
+// GetRate returns the ratio of two provided rates
+func (er *ExchangeRates) GetRate(base, dest string) (float64, error) {
+	baseRate, ok := er.rates[base]
+
+	if !ok {
+		return 0, fmt.Errorf("rate not found for currency %s", base)
+	}
+
+	destRate, ok := er.rates[dest]
+
+	if !ok {
+		return 0, fmt.Errorf("rate not found for currency %s", dest)
+	}
+
+	return destRate / baseRate, nil
+}
+
 // GetRates get new rates data from the eu bank servers
-func (er *ExchangeRates) GetRates() error {
+func (er *ExchangeRates) getRates() error {
 	resp, err := http.DefaultClient.Get("https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml")
 
 	if err != nil {
@@ -47,6 +64,8 @@ func (er *ExchangeRates) GetRates() error {
 
 		er.rates[c.Currency] = r
 	}
+
+	er.rates["EUR"] = 1
 
 	return nil
 }
